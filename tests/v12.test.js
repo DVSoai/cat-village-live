@@ -1,0 +1,11 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';
+import {Village12,ZONES,COMMANDS,commandOf} from '../src/v12-core.js';
+const harness=()=>{let now=1000,events=[],map=new Map();return {events,map,instance:()=>new Village12({now:()=>now,onEffect:e=>events.push(e),storage:{getItem:k=>map.get(k),setItem:(k,v)=>map.set(k,v)}})}};
+test('exactly three visible progression zones in order',()=>{assert.deepEqual(ZONES.map(z=>z.id),['market','harbor','grove']);assert.deepEqual(ZONES.map(z=>z.threshold),[250,600,1000])});
+test('all six requested Vietnamese chat commands recognized',()=>{for(const c of COMMANDS)assert.equal(commandOf(c+' xin chào'),c);assert.equal(commandOf('hello'),null);assert.equal(commandOf('!ăn'),null)});
+test('free chat and likes unlock the market',()=>{const h=harness(),v=h.instance();for(let i=0;i<100;i++)v.event('chat','Lan','Xin chào');assert.equal(v.snapshot().progress,200);for(let i=0;i<5;i++)v.event('like','Lan',100);assert.ok(v.snapshot().unlocks.includes('market'));assert.equal(h.events.filter(x=>x.type==='unlock').length,1)});
+test('all zones unlock exactly once with top contributor',()=>{const h=harness(),v=h.instance();v.contribute('Mít',900);v.contribute('An',120);assert.equal(v.snapshot().unlocks.length,3);assert.equal(h.events.filter(x=>x.type==='unlock').length,3);assert.equal(h.events[0].leaders[0],'Mít');v.contribute('Mít',100);assert.equal(h.events.filter(x=>x.type==='unlock').length,3)});
+test('zone unlock persists after model reload',()=>{const h=harness(),v=h.instance();v.contribute('Lan',640);assert.equal(h.instance().snapshot().unlocks.length,2);assert.equal(h.instance().snapshot().progress,640)});
+test('chat command sends event with sanitized username',()=>{const h=harness(),v=h.instance();assert.equal(v.event('chat','<img>','!hat'),'!hat');assert.ok(h.events.find(e=>e.type==='command'&&e.command==='!hat'));assert.equal(v.snapshot().leaders.length,1)});
+test('unknown chat still contributes free village points',()=>{const h=harness(),v=h.instance();assert.equal(v.event('chat','Khách','xin chào'),null);assert.equal(v.snapshot().progress,2)});
+test('empty state leaves all areas locked, residents not part of state',()=>{const h=harness(),v=h.instance();assert.deepEqual(v.snapshot().unlocks,[]);assert.equal(v.snapshot().next.id,'market');assert.equal('cats' in v.data,false)});
