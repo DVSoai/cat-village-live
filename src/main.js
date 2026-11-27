@@ -1,8 +1,9 @@
 
 import * as THREE from 'three';
 import './style.css';
+import { connectLive } from './live.js';
 const app=document.getElementById('app');
-app.innerHTML='<div class="layout"><div class="screen" id="screen"><div class="hud"><div class="top"><div class="logo"><strong>🐾 LÀNG MÈO</strong><small>COZY LIVE VILLAGE</small></div><div class="counter" id="clock"></div></div><div class="bottom"><div class="event" id="event">🌻 Chào mừng đến Làng Mèo Online!</div><div class="tagline">💬 Bình luận • ❤️ Thả tim • 🌹 Tặng hoa để giúp làng</div></div></div></div><aside class="panel"><h2>🐱 Trạm điều khiển</h2><p>Bản demo mô phỏng sự kiện TikTok LIVE. Panel này không nằm trong khung phát sóng.</p><input id="username" placeholder="Tên người xem" value="KhachGheTham"/><button id="chat">💬 Bình luận chào làng</button><button id="like">❤️ Thả 100 tim</button><button class="rose" id="rose">🌹 Tặng hoa hồng</button><button class="gold" id="food">🐟 Tặng giỏ cá</button><button class="special" id="super">🎉 Tặng quà lớn: Lễ hội</button><button id="day">🌙 Chuyển ngày / đêm</button><div class="stats"><div class="stat"><b id="flowers">0</b><small>Hoa cộng đồng</small></div><div class="stat"><b id="hearts">0</b><small>Lượt tim</small></div><div class="stat"><b id="fish">0</b><small>Cá dự trữ</small></div><div class="stat"><b id="visits">0</b><small>Khách ghé thăm</small></div></div><div class="hint">Tích hợp qua <code>window.handleTikTokEvent(type,username,data)</code>. Tiến độ lưu trong trình duyệt.</div></aside></div>';
+app.innerHTML='<div class="layout"><div class="screen" id="screen"><div class="hud"><div class="top"><div class="logo"><strong>🐾 LÀNG MÈO</strong><small>COZY LIVE VILLAGE</small></div><div class="counter" id="clock"></div></div><div class="bottom"><div class="event" id="event">🌻 Chào mừng đến Làng Mèo Online!</div><div class="tagline">💬 Bình luận • ❤️ Thả tim • 🌹 Tặng hoa để giúp làng</div></div></div></div><aside class="panel"><h2>🐱 Trạm điều khiển</h2><p>Bản demo mô phỏng sự kiện TikTok LIVE. Panel này không nằm trong khung phát sóng.</p><input id="username" placeholder="Tên người xem" value="KhachGheTham"/><button id="chat">💬 Bình luận chào làng</button><button id="like">❤️ Thả 100 tim</button><button class="rose" id="rose">🌹 Tặng hoa hồng</button><button class="gold" id="food">🐟 Tặng giỏ cá</button><button class="special" id="super">🎉 Tặng quà lớn: Lễ hội</button><button id="day">🌙 Chuyển ngày / đêm</button><div class="stats"><div class="stat"><b id="flowers">0</b><small>Hoa cộng đồng</small></div><div class="stat"><b id="hearts">0</b><small>Lượt tim</small></div><div class="stat"><b id="fish">0</b><small>Cá dự trữ</small></div><div class="stat"><b id="visits">0</b><small>Khách ghé thăm</small></div></div><div class="hint"><strong>TikFinity WebSocket</strong><input id="liveUrl" value="ws://localhost:21213/" aria-label="WebSocket URL"/><button id="liveConnect">Kết nối LIVE</button><p id="liveStatus" role="status">Chưa kết nối</p>Tích hợp qua <code>window.handleTikTokEvent(type,username,data)</code>. Tiến độ lưu trong trình duyệt.</div></aside></div>';
 const screen=document.getElementById('screen');
 let saved={};try{saved=JSON.parse(localStorage.getItem('catVillageV1')||'{}')}catch{}
 const state={flowers:saved.flowers||0,hearts:saved.hearts||0,fish:saved.fish||0,visits:saved.visits||0,visitors:saved.visitors||{},clock:saved.clock??.28,night:!!saved.night};
@@ -52,13 +53,26 @@ const particles=[],vector=new THREE.Vector3();
 function burst(x,z,symbol,count=8){for(let i=0;i<count;i++){const div=document.createElement('div');div.textContent=symbol;div.style.cssText='position:absolute;left:50%;top:50%;z-index:8;pointer-events:none;font-size:24px;text-shadow:0 2px 4px #0007;';screen.appendChild(div);particles.push({div,x:x+(Math.random()-.5)*3,z:z+(Math.random()-.5)*3,y:1,life:2+Math.random(),drift:(Math.random()-.5)*.7})}}
 let eventTimer,festivalUntil=0;function announce(msg){const el=document.getElementById('event');el.textContent=msg;el.style.opacity=1;clearTimeout(eventTimer);eventTimer=setTimeout(()=>el.style.opacity=.48,5500)}
 window.handleTikTokEvent=function(type,username='Khách',data=''){username=String(username||'Khách').replace(/[<>]/g,'').slice(0,28);switch(type){
-case 'chat':if(!state.visitors[username]){state.visitors[username]=1;state.visits++;announce('🐱 Chào mừng '+username+' ghé thăm làng!');burst(0,0,'👋',5)}else announce('💬 '+username+': '+String(data||'Meo meo!').slice(0,100));break;
+case 'chat':if(!Object.hasOwn(state.visitors,username)){state.visitors[username]=1;state.visits++;announce('🐱 Chào mừng '+username+' ghé thăm làng!');burst(0,0,'👋',5)}else announce('💬 '+username+': '+String(data||'Meo meo!').slice(0,100));break;
 case 'like':{const count=typeof data==='number'?Math.max(1,Math.min(data,1000)):1;state.hearts+=count;announce('❤️ '+username+' giúp vườn cây tươi tốt!');burst(-6,6,'💧',Math.min(18,Math.ceil(count/8)));break}
 case 'gift_rose':state.flowers++;if(state.flowers<=100)flower(-1.9+((state.flowers-1)%10)*.33,7.2+Math.floor((state.flowers-1)/10)*.36,state.flowers);announce('🌹 '+username+' trồng một bông hoa cho làng!');burst(0,5,'🌸',10);break;
 case 'gift_food':case 'gift_tractor':state.fish+=10;announce('🐟 '+username+' mang 10 con cá đến cho đàn mèo!');burst(0,0,'🐟',12);for(const c of cats)if(c.job==='kitchen'||c.job==='rest')c.waiting=0;break;
 case 'gift_super':announce('🎉 Lễ hội toàn làng! Cảm ơn '+username+'!');burst(0,0,'🎊',30);festivalUntil=performance.now()+9500;break;
 default:announce('✨ '+username+' tương tác: '+type)}
 hud();persist()};
+let stopLive=null;
+const liveStatus=document.getElementById('liveStatus'),liveButton=document.getElementById('liveConnect');
+const statusLabels={connecting:'Đang kết nối…',connected:'Đã kết nối',error:'Lỗi kết nối',disconnected:'Mất kết nối — đang thử lại',stopped:'Đã ngắt'};
+liveButton.onclick=()=>{
+ if(stopLive){stopLive();stopLive=null;liveButton.textContent='Kết nối LIVE';return}
+ const url=document.getElementById('liveUrl').value.trim();
+ try{const parsed=new URL(url);if(!['ws:','wss:'].includes(parsed.protocol))throw Error()}catch{liveStatus.textContent='URL WebSocket không hợp lệ';return}
+ stopLive=connectLive({url,onStatus:s=>liveStatus.textContent=statusLabels[s]||s,onEvent:e=>{
+ const count=e.type.startsWith('gift_')?Math.min(100,e.data||1):1;
+ for(let i=0;i<count;i++)window.handleTikTokEvent(e.type,e.user,e.data);
+ }});
+ liveButton.textContent='Ngắt kết nối';
+};
 const who=()=>document.getElementById('username').value||'Khách';
 for(const [id,type,data] of [['chat','chat','Xin chào Làng Mèo!'],['like','like',100],['rose','gift_rose',null],['food','gift_food',null],['super','gift_super',null]])document.getElementById(id).onclick=()=>window.handleTikTokEvent(type,who(),data);
 document.getElementById('day').onclick=()=>{state.night=!state.night;persist()};
