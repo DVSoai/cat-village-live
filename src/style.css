@@ -18,3 +18,26 @@
 .panel .v11-choice{width:calc((100% - 25px)/6);padding:8px 0;margin:0;background:#f7dfaa}
 .v11-small{line-height:1.45}
 @media(max-width:420px){.v11-jar{top:66px;left:9px;right:9px}.v11-race{top:140px;font-size:10px}.v11-jarhead{font-size:11px}.v11-toast{font-size:13px}.logo strong{font-size:17px}}
+
+
+/* P0 retention dashboard: clear goal/3 timers/3 stats/top 3 on a 9:16 frame */
+.retention-hud{position:absolute;top:185px;left:11px;right:11px;z-index:5;display:flex;flex-direction:column;gap:4px;max-width:calc(100% - 22px);pointer-events:none;color:#fff8e7;text-shadow:0 1px 2px #102b29}
+.ret-goal{padding:6px 10px;background:#29422bdd;border-radius:11px;font-size:12px;font-weight:900}
+.ret-gbar{height:5px;margin-top:4px;background:#14331ed9;border-radius:4px;overflow:hidden}
+#ret-gfill{background:#f9d889;height:100%;width:0;transition:width .25s}
+.ret-timers{display:flex;justify-content:space-between;gap:4px}
+.ret-timers span{border-radius:8px;background:#263c41d9;padding:5px 4px;flex:1;text-align:center;font-size:11px;font-weight:900;white-space:nowrap}
+.ret-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.ret-stat{background:#1e3737c9;border-radius:8px;padding:4px;font-size:10px;font-weight:800;min-width:0;display:flex;gap:3px;align-items:center;flex-wrap:wrap;justify-content:center}
+.ret-stat span{flex:1}.ret-stat b{font-size:9px}
+.ret-track{height:5px;background:#0b2428;flex-basis:100%;order:2;border-radius:6px;overflow:hidden}
+.ret-track i{display:block;width:0;height:100%;background:#9ddb8c}
+.ret-top{background:#252e3dcb;padding:5px 8px;border-radius:8px;display:flex;gap:5px;align-items:center;font-size:10px;min-width:0;white-space:nowrap;overflow:hidden}
+.ret-top strong{color:#ffe498;flex-shrink:0}.ret-top span{overflow:hidden;text-overflow:ellipsis}
+.ret-call{background:#314a3dc4;padding:4px 5px;border-radius:8px;font-size:9px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ret-panel{border-top:1px solid #43545a;margin-top:14px;padding-top:7px}
+.ret-panel h3{font-size:14px;margin:7px 0}
+.ret-panel #ret-missions,.ret-panel #ret-profile,.ret-panel #ret-teams{font-size:11px;line-height:1.55}
+.ret-buttons{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.ret-panel .ret-buttons button{font-size:11px;padding:8px 5px;margin:0}
+@media(max-width:420px){.retention-hud{top:165px;left:7px;right:7px;max-width:calc(100% - 14px);gap:2px}.ret-goal{font-size:10px;padding:4px 7px}.ret-timers span{font-size:9px;padding:4px 2px}.ret-stat{font-size:9px;padding:3px}.ret-top{font-size:9px;padding:4px}.ret-call{font-size:8px;padding:3px}}
