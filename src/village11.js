@@ -19,7 +19,7 @@ export class Village11 {
   this.session={id:this.now(),users:{},joined:new Set()};
   this.nextGoldenAt=this.now()+GOLDEN_INTERVAL_MS*(.8+this.random()*.4);
   this.nextRaceAt=this.now()+RACE_INTERVAL_MS;
-  this.nextJar={label:'Xây cầu gỗ',icon:'🌉'};
+  this.nextJar=this.data.jarLevel%2?{label:'Mở hội làng',icon:'🎪'}:{label:'Xây cầu gỗ',icon:'🌉'};
   this.persist();
  }
  persist(){try{this.storage?.setItem('catVillageV11',JSON.stringify({...this.data,guests:[],race:null}))}catch{}}
@@ -38,9 +38,9 @@ export class Village11 {
  else return false;
  this.addJar(amount,username);this.assignTitles(u);this.persist();return true}
  golden(reason='timer'){this.data.lastGoldenAt=this.now();this.nextGoldenAt=this.now()+GOLDEN_INTERVAL_MS*(.8+this.random()*.4);this.data.goldenAt=this.now()+15000;this.emit('golden',{reason,expires:this.data.goldenAt});this.persist()}
- startRace(){if(!this.data.race)this.data.race={phase:'signup',choices:{},boost:[0,0,0,0,0,0]};this.data.race.phase='running';this.data.race.startedAt=this.now();this.data.race.finishAt=this.now()+RACE_DURATION_MS;this.data.race.winner=0;this.data.lastRaceAt=this.now();this.nextRaceAt=this.now()+RACE_INTERVAL_MS;this.emit('race_start')}
+ startRace(){if(this.data.race?.phase==='running')return;if(!this.data.race||this.data.race.phase==='finished')this.data.race={phase:'signup',choices:{},boost:[0,0,0,0,0,0]};this.data.race.phase='running';this.data.race.startedAt=this.now();this.data.race.finishAt=this.now()+RACE_DURATION_MS;this.data.race.winner=0;this.data.lastRaceAt=this.now();this.nextRaceAt=this.now()+RACE_INTERVAL_MS;this.emit('race_start')}
  finishRace(){const r=this.data.race;if(!r||r.phase!=='running')return;const base=[0,1,2,3,4,5].map(i=>this.random()*100+(r.boost[i]||0));r.winner=base.indexOf(Math.max(...base))+1;r.phase='finished';const winners=[];for(const [key,choice] of Object.entries(r.choices)){if(choice===r.winner){const u=this.data.users[key];if(u){u.races++;u.points+=50;winners.push(u.name)}}}this.emit('race_end',{winner:r.winner,winners});this.persist()}
- tick(){const now=this.now();this.data.guests=this.data.guests.filter(x=>x.expires>now);if(this.data.race?.phase==='running'&&now>=this.data.race.finishAt)this.finishRace();if(this.data.race?.phase==='finished'&&now>=this.data.race.finishAt+30000)this.data.race=null;if(now>=this.nextRaceAt&&!this.data.race?.phase)this.startRace();if(now>=this.nextGoldenAt)this.golden();if(this.data.goldenAt&&now>this.data.goldenAt)this.data.goldenAt=0}
+ tick(){const now=this.now();this.data.guests=this.data.guests.filter(x=>x.expires>now);if(this.data.race?.phase==='running'&&now>=this.data.race.finishAt)this.finishRace();if(this.data.race?.phase==='finished'&&now>=this.data.race.finishAt+30000)this.data.race=null;if(now>=this.nextRaceAt&&(!this.data.race||this.data.race.phase==='signup'))this.startRace();if(now>=this.nextGoldenAt)this.golden();if(this.data.goldenAt&&now>this.data.goldenAt)this.data.goldenAt=0}
  top(limit=10,session=false){return Object.values(this.data.users).filter(x=>!session||this.session.joined.has(x.name.toLowerCase())).sort((a,b)=>b.points-a.points).slice(0,limit)}
  snapshot(){return {jar:this.data.jar,jarLevel:this.data.jarLevel,jarTarget:JAR_TARGET,objective:this.nextJar,likes:this.data.likes,nextLike:LIKE_MILESTONE-this.data.likes%LIKE_MILESTONE,guests:this.data.guests,race:this.data.race,top:this.top(),goldenActive:this.data.goldenAt>this.now(),nextRaceIn:Math.max(0,this.nextRaceAt-this.now()),nextGoldenIn:Math.max(0,this.nextGoldenAt-this.now())}}
 }
