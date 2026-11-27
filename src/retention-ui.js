@@ -23,8 +23,6 @@ export function mountRetention({screen,cats,announce,burst,village11}){
  function action(type,name,payload){return model.action(type,name,payload)}
  function render(now,dt){
   model.tick();
-  const hunger=model.data.stats.hunger;
-  for(const c of cats){if(c.job==='rest')continue;c.speed=Math.max(.25,Math.min(c.speed||.7,.7))*(hunger<25?.999:1)}
   if(now-prevUpdate<350)return;
   prevUpdate=now;
   const state=model.snapshot(),d=state.daily;
