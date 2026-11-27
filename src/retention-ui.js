@@ -10,7 +10,9 @@ export function mountRetention({screen,cats,announce,burst,village11}){
  panel.appendChild(extra);
  const actor=()=>document.getElementById('username').value||'Khách';
  for(const [id,command] of [['ret-feed','!choan'],['ret-protect','!baove'],['ret-cam','!cam'],['ret-xanh','!xanh']])extra.querySelector('#'+id).onclick=()=>window.handleTikTokEvent('chat',actor(),command);
+ const waving=new Map();
  const model=new Retention({storage:window.localStorage,onEffect:e=>{
+  if(e.type==='wave'){const index=CAT_NAMES.indexOf(e.cat);if(index>=0){waving.set(index,performance.now()+1500);burst(cats[index].group.position.x,cats[index].group.position.z,'💛',3)}}
   const info={fish_catch:['🐟 Mèo câu được cá!','🐟',6],flower_bloom:['🌸 Vườn hoa vừa nở!','🌸',8],kitten_visit:['🐾 Mèo con ghé thăm làng!','🐱',7]};
   if(e.type==='micro'){const [msg,symbol,n]=info[e.kind]||['✨ Chuyện nhỏ ở làng!','✨',5];announce(msg);burst(0,0,symbol,n)}
   if(e.type==='major'){const cases={fox:'🦊 Cáo đang lén lấy cá! Gõ !duoi (3 người giúp)',rain:'🌧️ Mưa lớn! Gõ !che để cứu ruộng (3 lượt)',lost_kitten:'🐈 Mèo con đi lạc! Gõ !tim để tìm (3 lượt)',festival:'🎉 Hội làng 5 phút! Mèo nào cũng vui'};announce(cases[e.kind]||'🎪 Sự kiện của làng!');burst(0,0,'✨',13)}
@@ -23,6 +25,7 @@ export function mountRetention({screen,cats,announce,burst,village11}){
  function action(type,name,payload){return model.action(type,name,payload)}
  function render(now,dt){
   model.tick();
+  for(const [index,end] of waving){if(now>=end){waving.delete(index);continue}const cat=cats[index];if(!cat)continue;cat.group.rotation.y=Math.atan2(21-cat.group.position.x,29-cat.group.position.z);cat.group.position.y+=Math.abs(Math.sin(now*.017))*0.06}
   if(now-prevUpdate<350)return;
   prevUpdate=now;
   const state=model.snapshot(),d=state.daily;
