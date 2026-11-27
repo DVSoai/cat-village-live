@@ -41,3 +41,5 @@
 .ret-buttons{display:grid;grid-template-columns:1fr 1fr;gap:4px}
 .ret-panel .ret-buttons button{font-size:11px;padding:8px 5px;margin:0}
 @media(max-width:420px){.retention-hud{top:165px;left:7px;right:7px;max-width:calc(100% - 14px);gap:2px}.ret-goal{font-size:10px;padding:4px 7px}.ret-timers span{font-size:9px;padding:4px 2px}.ret-stat{font-size:9px;padding:3px}.ret-top{font-size:9px;padding:4px}.ret-call{font-size:8px;padding:3px}}
+
+.ret-album{margin:10px 0}.ret-album summary{cursor:pointer;font-weight:700;font-size:12px;padding:8px 0}.ret-album-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}.ret-album-cat{border:1px solid #53605c;border-radius:8px;padding:7px;display:flex;flex-direction:column;gap:3px;opacity:.65;min-width:0}.ret-album-cat.seen{opacity:1;border-color:#9cba85;background:#294238}.ret-album-cat strong{font-size:11px}.ret-album-cat small{font-size:10px;overflow-wrap:anywhere}
