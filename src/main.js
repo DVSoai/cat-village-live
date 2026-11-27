@@ -72,8 +72,8 @@ liveButton.onclick=()=>{
  const url=document.getElementById('liveUrl').value.trim();
  try{const parsed=new URL(url);if(!['ws:','wss:'].includes(parsed.protocol))throw Error()}catch{liveStatus.textContent='URL WebSocket không hợp lệ';return}
  stopLive=connectLive({url,onStatus:s=>liveStatus.textContent=statusLabels[s]||s,onEvent:e=>{
- const count=e.type.startsWith('gift_')?Math.min(100,e.data||1):1;
- for(let i=0;i<count;i++)window.handleTikTokEvent(e.type,e.user,e.data);
+ const payload=e.type==='chat'?{text:e.data,avatar:e.avatar}:e.type.startsWith('gift_')?{count:e.data,coins:e.coins,avatar:e.avatar}:e.data;
+ window.handleTikTokEvent(e.type,e.user,payload);
  }});
  liveButton.textContent='Ngắt kết nối';
 };
@@ -93,6 +93,6 @@ v11Render=village11.render;v11RaceMove=village11.raceMove;
 const originalHandler=window.handleTikTokEvent;
 const retention=mountRetention({screen,cats,announce,burst,village11});
 retentionRender=retention.render;retentionModel=retention.model;
-window.handleTikTokEvent=(type,name='Khách',data='')=>{originalHandler(type,name,data);village11.handle(type,name,data);retention.action(type,name,data)};
+window.handleTikTokEvent=(type,name='Khách',data='')=>{const legacyData=type==='chat'&&data&&typeof data==='object'?data.text:data;originalHandler(type,name,legacyData);village11.handle(type,name,data);retention.action(type,name,data)};
 window.__catVillage11=village11.village;
 
