@@ -43,3 +43,9 @@
 @media(max-width:420px){.retention-hud{top:165px;left:7px;right:7px;max-width:calc(100% - 14px);gap:2px}.ret-goal{font-size:10px;padding:4px 7px}.ret-timers span{font-size:9px;padding:4px 2px}.ret-stat{font-size:9px;padding:3px}.ret-top{font-size:9px;padding:4px}.ret-call{font-size:8px;padding:3px}}
 
 .ret-album{margin:10px 0}.ret-album summary{cursor:pointer;font-weight:700;font-size:12px;padding:8px 0}.ret-album-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}.ret-album-cat{border:1px solid #53605c;border-radius:8px;padding:7px;display:flex;flex-direction:column;gap:3px;opacity:.65;min-width:0}.ret-album-cat.seen{opacity:1;border-color:#9cba85;background:#294238}.ret-album-cat strong{font-size:11px}.ret-album-cat small{font-size:10px;overflow-wrap:anywhere}
+
+/* Keep the actual canvas content at 9:16 even on short desktop windows. */
+.screen{box-sizing:content-box;width:min(540px,calc(95vw - 10px),calc((100dvh - 50px)*9/16));height:auto;max-height:none;flex-shrink:0;container-type:inline-size}
+@media(max-width:850px){.screen{width:min(540px,calc(95vw - 10px));max-height:none}}
+@container (max-width:380px){.hud{padding:8px}.logo{padding:5px 8px}.logo strong{font-size:15px}.logo small{font-size:9px}.counter{font-size:10px;padding:6px}.v11-jar{top:49px;padding:5px 8px;left:7px;right:7px}.v11-race{top:109px;font-size:9px;padding:3px 8px}.retention-hud{top:130px;left:6px;right:6px;gap:2px;max-width:calc(100% - 12px)}.ret-goal{font-size:9px;padding:3px 5px}.ret-timers span{font-size:9px;padding:3px 2px}.ret-stat{font-size:9px;padding:2px}.ret-top,.ret-call{font-size:8px;padding:3px}.event{font-size:11px;padding:5px 8px}.tagline{font-size:8px}}
+.perf-readout{font-size:11px;line-height:1.5;color:#c8d8d4;padding:8px;background:#15242b;border-radius:8px;margin-top:8px}
