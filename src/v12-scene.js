@@ -41,6 +41,22 @@ export function mountVillage12({world,cats,screen,camera,renderer,announce,burst
  let photoBy='',photoUntil=0,focusUntil=0,focusPoint=null,animation=null,noticeUntil=0,lastUi=0,latestPhoto=null;
  const zones={market:makeMarket(world),harbor:makeHarbor(world),grove:makeGrove(world)};
  const workers=[{id:4,job:'🎣 Thợ câu'},{id:7,job:'🥐 Thợ làm bánh'},{id:9,job:'🧵 Thợ may'},{id:12,job:'🎼 Nhạc công'}];
+
+ const jobStations=[
+  {id:4,at:[6.5,5.0],name:'CÂU CÁ',color:COLORS.blue},
+  {id:7,at:[-3.25,-5.7],name:'TIỆM BÁNH',color:COLORS.gold},
+  {id:9,at:[3.4,-3.55],name:'TIỆM MAY',color:COLORS.coral},
+  {id:12,at:[2.5,2.4],name:'ÂM NHẠC',color:COLORS.pink}
+ ];
+ for(const station of jobStations){const [x,z]=station.at;const stage=new THREE.Group();world.add(stage);stage.position.set(x,0,z);
+  cube(stage,COLORS.wood,[0,.12,0],[1.45,.24,1.15]);
+  cube(stage,station.color,[0,.35,-.42],[1.32,.12,.3]);
+  if(station.id===9){beam(stage,COLORS.wood,[.47,.6,0],[.06,.65,.06]);cube(stage,COLORS.cream,[.3,.65,0],[.5,.09,.6]);}
+  if(station.id===12){for(const dx of [-.5,.5])orb(stage,COLORS.gold,[dx,.42,-.2],[.11,.11,.11])}
+  if(station.id===7){for(const dx of [-.35,0,.35])orb(stage,COLORS.gold,[dx,.43,0],[.16,.13,.16])}
+  // Occupation is assigned to an EXISTING permanent cat, not an extra resident.
+  const resident=cats[station.id];if(resident){resident.zone=[x,z,.65,.5];resident.target.set(x,0,z)}
+ }
  // Existing resident cats change outfits/tools, no changes to cats[] length.
  const jobProps=[];
  for(const {id,job} of workers){const cat=cats[id];if(!cat)continue;const g=new THREE.Group();world.add(g);
