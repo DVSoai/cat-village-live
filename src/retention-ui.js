@@ -1,0 +1,44 @@
+import {Retention,CAT_NAMES} from './retention.js';
+const fmt=ms=>{const s=Math.max(0,Math.ceil(ms/1000));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
+const safe=s=>String(s||'').replace(/[<>]/g,'').slice(0,28);
+export function mountRetention({screen,cats,announce,burst,village11}){
+ const hud=screen.querySelector('.hud'),element=document.createElement('div');element.className='retention-hud';
+ element.innerHTML='<div class="ret-goal"><span id="ret-goal">🌾 Thu hoạch 0/20 rau → mở hội</span><div class="ret-gbar"><div id="ret-gfill"></div></div></div><div class="ret-timers"><span id="ret-micro">🐟 01:30</span><span id="ret-major">🎪 05:00</span><span id="ret-milestone">🏡 30:00</span></div><div class="ret-stats"><div class="ret-stat">🍚 <span>Đói</span><div class="ret-track"><i id="ret-hunger"></i></div><b id="ret-hn">78%</b></div><div class="ret-stat">😺 <span>Vui</span><div class="ret-track"><i id="ret-joy"></i></div><b id="ret-jn">82%</b></div><div class="ret-stat">🛡️ <span>An toàn</span><div class="ret-track"><i id="ret-safety"></i></div><b id="ret-sn">80%</b></div></div><div class="ret-top"><strong>🏆 TOP 3</strong><span id="ret-top3">Chưa có người góp sức</span></div><div class="ret-call">💬 Chat để mèo chào · ❤️ Tim giúp làng · !choan / !baove / !cam / !xanh</div>';
+ hud.appendChild(element);
+ const panel=document.querySelector('.panel'),extra=document.createElement('div');extra.className='ret-panel';
+ extra.innerHTML='<h3>🌾 Nhiệm vụ hôm nay</h3><div id="ret-missions">💬 0/20 tương tác · ❤️ 0/100 tim · 🛡️ 0/3 cứu làng</div><div id="ret-profile">Hãy bình luận để tạo hồ sơ!</div><h3>🤝 Hai đội</h3><div id="ret-teams">🟠 Cam 0 · 🔵 Xanh 0</div><div class="ret-buttons"><button id="ret-feed">🍚 Cho mèo ăn miễn phí (!choan)</button><button id="ret-protect">🛡️ Giữ an toàn (!baove)</button><button id="ret-cam">🟠 Đội Cam</button><button id="ret-xanh">🔵 Đội Xanh</button></div>';
+ panel.appendChild(extra);
+ const actor=()=>document.getElementById('username').value||'Khách';
+ for(const [id,command] of [['ret-feed','!choan'],['ret-protect','!baove'],['ret-cam','!cam'],['ret-xanh','!xanh']])extra.querySelector('#'+id).onclick=()=>window.handleTikTokEvent('chat',actor(),command);
+ const model=new Retention({storage:window.localStorage,onEffect:e=>{
+  const info={fish_catch:['🐟 Mèo câu được cá!','🐟',6],flower_bloom:['🌸 Vườn hoa vừa nở!','🌸',8],kitten_visit:['🐾 Mèo con ghé thăm làng!','🐱',7]};
+  if(e.type==='micro'){const [msg,symbol,n]=info[e.kind]||['✨ Chuyện nhỏ ở làng!','✨',5];announce(msg);burst(0,0,symbol,n)}
+  if(e.type==='major'){const cases={fox:'🦊 Cáo đang lén lấy cá! Gõ !duoi (3 người giúp)',rain:'🌧️ Mưa lớn! Gõ !che để cứu ruộng (3 lượt)',lost_kitten:'🐈 Mèo con đi lạc! Gõ !tim để tìm (3 lượt)',festival:'🎉 Hội làng 5 phút! Mèo nào cũng vui'};announce(cases[e.kind]||'🎪 Sự kiện của làng!');burst(0,0,'✨',13)}
+  if(e.type==='milestone'){announce('🏡 MỐC 30 PHÚT! Làng cùng phát triển! Người góp sức: '+(e.top.join(', ')||'cả làng'));burst(0,0,'🎊',30)}
+  if(e.type==='crisis_resolved'){announce('🌟 Cả làng cùng vượt qua thử thách!');burst(0,0,'⭐',16)}
+  if(e.type==='harvest_complete'){announce('🌾 Đã thu hoạch 20 rau! MỞ HỘI LÀNG!');burst(-6,5,'🎉',25)}
+  if(e.type==='daily_complete')announce('🎁 Hoàn thành nhiệm vụ ngày '+(e.index+1)+'!')}
+ });
+ let prevUpdate=0;
+ function action(type,name,payload){return model.action(type,name,payload)}
+ function render(now,dt){
+  model.tick();
+  const hunger=model.data.stats.hunger;
+  for(const c of cats){if(c.job==='rest')continue;c.speed=Math.max(.25,Math.min(c.speed||.7,.7))*(hunger<25?.999:1)}
+  if(now-prevUpdate<350)return;
+  prevUpdate=now;
+  const state=model.snapshot(),d=state.daily;
+  document.getElementById('ret-goal').textContent='🌾 Thu hoạch '+(d.harvest||0)+'/20 rau → '+(d.harvestDone?'đã mở hội':'mở hội');
+  document.getElementById('ret-gfill').style.width=Math.min(100,(d.harvest||0)*5)+'%';
+  for(const [id,value] of [['ret-micro',state.microIn],['ret-major',state.majorIn],['ret-milestone',state.milestoneIn]]){const icon=id==='ret-micro'?'🐟':id==='ret-major'?'🎪':'🏡';document.getElementById(id).textContent=icon+' '+fmt(value)}
+  for(const [key,id,number] of [['hunger','ret-hunger','ret-hn'],['joy','ret-joy','ret-jn'],['safety','ret-safety','ret-sn']]){document.getElementById(id).style.width=Math.floor(state.stats[key])+'%';document.getElementById(id).style.background=state.stats[key]<25?'#e98176':state.stats[key]<50?'#f1ca7a':'#a6e5a3';document.getElementById(number).textContent=Math.floor(state.stats[key])+'%'}
+  const top=Object.values(state.visitors).sort((a,b)=>b.points-a.points).slice(0,3);
+  document.getElementById('ret-top3').textContent=top.length?top.map((u,i)=>(i+1)+'. '+safe(u.name)+' '+u.points).join(' · '):'Hãy bình luận để đứng đầu!';
+  document.getElementById('ret-missions').textContent='💬 '+d.chats+'/20 chat · ❤️ '+d.likes+'/100 tim · 🛡️ '+d.help+'/3 cứu làng';
+  const profile=state.visitors[actor().toLowerCase()];document.getElementById('ret-profile').textContent=profile?'🐱 '+safe(profile.name)+' · '+profile.level+' Lv'+(Math.floor(profile.points/100)+1)+' · 🔥 '+profile.streak+' ngày · 📖 '+profile.cats.length+'/20 mèo':'💬 Bình luận để tạo hồ sơ và gặp mèo!';
+  document.getElementById('ret-teams').textContent='🟠 Cam '+state.teams.cam+' · 🔵 Xanh '+state.teams.xanh;
+  if(state.crisis)document.querySelector('.ret-call').textContent='⚠️ '+({fox:'Cáo trộm cá',rain:'Mưa lớn',lost_kitten:'Mèo con đi lạc'}[state.crisis.kind]||'Sự cố')+' — Gõ '+state.crisis.command+' ('+state.crisis.progress+'/'+state.crisis.required+')';
+  else document.querySelector('.ret-call').textContent='💬 Chat để mèo chào · ❤️ Tim giúp làng · !choan / !baove / !cam / !xanh';
+ }
+ return {model,action,render}
+}
