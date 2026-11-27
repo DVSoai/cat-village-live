@@ -33,7 +33,7 @@ const POS={market:[8.5,-9.5],harbor:[8.1,9.7],grove:[-8.8,10.3]};
 const pretty={'!an':'🍚 Cho mèo ăn','!vuot':'💗 Vuốt ve mèo','!hat':'🎼 Mèo hát','!nhay':'💃 Mèo nhảy','!chup':'📸 Chụp khoảnh khắc','!tham':'🏡 Thăm nhà mèo'};
 export function mountVillage12({world,cats,screen,camera,renderer,announce,burst,username,onPhoto}){
  const panel=document.querySelector('.panel');
- const info=document.createElement('section');info.className='v12-panel';info.innerHTML='<h3>🏗️ V1.2 — Mở rộng làng</h3><p id="v12-next"></p><div class="v12-zone-list" id="v12-zones"></div><h3>💬 Lệnh chat miễn phí</h3><div class="v12-command-grid" id="v12-cmd"></div><button id="v12-photo-save">📸 Lưu ảnh kỷ niệm</button><p class="v12-hint">Mục tiêu tính cộng dồn trong trình duyệt đang phát LIVE. Mèo con là NPC, không thay thế 20 mèo chính.</p>';
+ const info=document.createElement('section');info.className='v12-panel';info.innerHTML='<h3>🏗️ V1.2 — Mở rộng làng</h3><p id="v12-next"></p><div class="v12-zone-list" id="v12-zones"></div><h3>💬 Lệnh chat miễn phí</h3><div class="v12-command-grid" id="v12-cmd"></div><button id="v12-test-next">🧪 Mở khu kế tiếp (chỉ thử nghiệm)</button><button id="v12-photo-save">📸 Lưu ảnh kỷ niệm</button><p class="v12-hint">Mục tiêu tính cộng dồn trong trình duyệt đang phát LIVE. Mèo con là NPC, không thay thế 20 mèo chính.</p>';
  panel.appendChild(info);
  const hud=screen.querySelector('.hud'),hudLine=document.createElement('div');hudLine.className='v12-hud';hudLine.textContent='🏗️ Đang mở khu mới…';hud.appendChild(hudLine);
  const sticker=document.createElement('div');sticker.className='v12-notice';screen.appendChild(sticker);
@@ -66,6 +66,7 @@ export function mountVillage12({world,cats,screen,camera,renderer,announce,burst
  for(const zone of ZONES){const [x,z]=POS[zone.id];const group=new THREE.Group();group.position.set(x,.1,z);world.add(group);const pole=beam(group,COLORS.wood,[0,.5,0],[.08,1,.08]);const board=cube(group,COLORS.dark,[0,1,0],[1.8,.64,.15]);billboards.push({id:zone.id,group});}
  const buttonArea=info.querySelector('#v12-cmd');
  for(const cmd of COMMANDS){const btn=document.createElement('button');btn.textContent=pretty[cmd];btn.onclick=()=>window.handleTikTokEvent('chat',username(),cmd);buttonArea.appendChild(btn)}
+ info.querySelector('#v12-test-next').onclick=()=>{const next=model.snapshot().next;if(next)model.contribute('Kiểm thử V1.2',Math.max(1,next.threshold-model.snapshot().progress));else notice('✅ Đã mở tất cả khu mới');syncUi()};
  info.querySelector('#v12-photo-save').onclick=()=>{
    // User-triggered local export only. WebGL screenshot is taken immediately after an explicit render.
    try{renderer.render(world.parent,camera);const source=renderer.domElement;
@@ -91,7 +92,7 @@ export function mountVillage12({world,cats,screen,camera,renderer,announce,burst
     if(animation.cmd==='!an')g.scale.y=.9+.08*pulse;
   }}
   // v11's camera currently has its own follow/restore; keep this zoom subtle to avoid control conflict.
-  if(focusPoint&&time<focusUntil){camera.zoom=Math.min(1.25,Math.max(camera.zoom,1.11));camera.updateProjectionMatrix()}
+  if(focusPoint&&time<focusUntil){camera.zoom=Math.min(1.24,Math.max(camera.zoom,1.1));camera.position.x+=(21+focusPoint[0]*.38-camera.position.x)*Math.min(1,dt*3);camera.position.z+=(29+focusPoint[1]*.38-camera.position.z)*Math.min(1,dt*3);camera.lookAt(camera.position.x-21,0,camera.position.z-29);camera.updateProjectionMatrix()}
   photoFrame.classList.toggle('show',time<photoUntil);
   if(time>noticeUntil)sticker.classList.remove('show');
   if(time-lastUi>1000){syncUi();lastUi=time}
