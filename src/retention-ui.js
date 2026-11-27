@@ -1,7 +1,7 @@
 import {Retention,CAT_NAMES,CAT_PERSONALITIES} from './retention.js';
 const fmt=ms=>{const s=Math.max(0,Math.ceil(ms/1000));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
 const safe=s=>String(s||'').replace(/[<>]/g,'').slice(0,28);
-export function mountRetention({screen,cats,announce,burst,village11}){
+export function mountRetention({screen,cats,announce,burst,village11,onSceneEvent=()=>{}}){
  const hud=screen.querySelector('.hud'),element=document.createElement('div');element.className='retention-hud';
  element.innerHTML='<div class="ret-goal"><span id="ret-goal">🌾 Thu hoạch 0/20 rau → mở hội</span><div class="ret-gbar"><div id="ret-gfill"></div></div></div><div class="ret-timers"><span id="ret-micro">🐟 01:30</span><span id="ret-major">🎪 05:00</span><span id="ret-milestone">🏡 30:00</span></div><div class="ret-stats"><div class="ret-stat">🍚 <span>Đói</span><div class="ret-track"><i id="ret-hunger"></i></div><b id="ret-hn">78%</b></div><div class="ret-stat">😺 <span>Vui</span><div class="ret-track"><i id="ret-joy"></i></div><b id="ret-jn">82%</b></div><div class="ret-stat">🛡️ <span>An toàn</span><div class="ret-track"><i id="ret-safety"></i></div><b id="ret-sn">80%</b></div></div><div class="ret-top"><strong>🏆 TOP 3</strong><span id="ret-top3">Chưa có người góp sức</span></div><div class="ret-call">💬 Chat để mèo chào · ❤️ Tim giúp làng · !choan / !baove / !cam / !xanh</div>';
  hud.appendChild(element);
@@ -20,6 +20,7 @@ export function mountRetention({screen,cats,announce,burst,village11}){
  for(const [id,command] of [['ret-feed','!choan'],['ret-protect','!baove'],['ret-cam','!cam'],['ret-xanh','!xanh']])extra.querySelector('#'+id).onclick=()=>window.handleTikTokEvent('chat',actor(),command);
  const waving=new Map();
  const model=new Retention({storage:window.localStorage,onEffect:e=>{
+  onSceneEvent(e);
   if(e.type==='wave'){const index=CAT_NAMES.indexOf(e.cat);if(index>=0&&cats[index]?.group){waving.set(index,performance.now()+1500);burst(cats[index].group.position.x,cats[index].group.position.z,'💛',3)}}
   const info={fish_catch:['🐟 Mèo câu được cá!','🐟',6],flower_bloom:['🌸 Vườn hoa vừa nở!','🌸',8],kitten_visit:['🐾 Mèo con ghé thăm làng!','🐱',7]};
   if(e.type==='micro'){const [msg,symbol,n]=info[e.kind]||['✨ Chuyện nhỏ ở làng!','✨',5];announce(msg);burst(0,0,symbol,n)}
