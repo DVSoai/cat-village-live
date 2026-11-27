@@ -1,4 +1,4 @@
-import {Retention,CAT_NAMES} from './retention.js';
+import {Retention,CAT_NAMES,CAT_PERSONALITIES} from './retention.js';
 const fmt=ms=>{const s=Math.max(0,Math.ceil(ms/1000));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
 const safe=s=>String(s||'').replace(/[<>]/g,'').slice(0,28);
 export function mountRetention({screen,cats,announce,burst,village11}){
@@ -8,11 +8,19 @@ export function mountRetention({screen,cats,announce,burst,village11}){
  const panel=document.querySelector('.panel'),extra=document.createElement('div');extra.className='ret-panel';
  extra.innerHTML='<h3>🌾 Nhiệm vụ hôm nay</h3><div id="ret-missions">💬 0/20 tương tác · ❤️ 0/100 tim · 🛡️ 0/3 cứu làng</div><div id="ret-profile">Hãy bình luận để tạo hồ sơ!</div><h3>🤝 Hai đội</h3><div id="ret-teams">🟠 Cam 0 · 🔵 Xanh 0</div><div class="ret-buttons"><button id="ret-feed">🍚 Cho mèo ăn miễn phí (!choan)</button><button id="ret-protect">🛡️ Giữ an toàn (!baove)</button><button id="ret-cam">🟠 Đội Cam</button><button id="ret-xanh">🔵 Đội Xanh</button></div>';
  panel.appendChild(extra);
+ const album=document.createElement('details');album.className='ret-album';
+ const summary=document.createElement('summary');summary.textContent='📖 Album cư dân (0/20)';
+ const grid=document.createElement('div');grid.className='ret-album-grid';
+ const cards=CAT_NAMES.map((name,i)=>{const card=document.createElement('div');card.className='ret-album-cat';const title=document.createElement('strong'),story=document.createElement('small');card.append(title,story);grid.appendChild(card);return {card,title,story}});
+ album.append(summary,grid);extra.appendChild(album);
+ let albumKey='';
+ function updateAlbum(profile){const ids=new Set(profile?.cats||[]),key=[...ids].sort((a,b)=>a-b).join(',');if(key===albumKey&&summary.dataset.ready)return;albumKey=key;summary.dataset.ready='1';summary.textContent='📖 Album cư dân ('+ids.size+'/20)';cards.forEach(({card,title,story},i)=>{const seen=ids.has(i);card.classList.toggle('seen',seen);title.textContent=seen?'🐱 '+CAT_NAMES[i]:'🔒 Mèo '+(i+1);story.textContent=seen?CAT_PERSONALITIES[i]:'Chưa gặp'})}
+ updateAlbum(null);
  const actor=()=>document.getElementById('username').value||'Khách';
  for(const [id,command] of [['ret-feed','!choan'],['ret-protect','!baove'],['ret-cam','!cam'],['ret-xanh','!xanh']])extra.querySelector('#'+id).onclick=()=>window.handleTikTokEvent('chat',actor(),command);
  const waving=new Map();
  const model=new Retention({storage:window.localStorage,onEffect:e=>{
-  if(e.type==='wave'){const index=CAT_NAMES.indexOf(e.cat);if(index>=0){waving.set(index,performance.now()+1500);burst(cats[index].group.position.x,cats[index].group.position.z,'💛',3)}}
+  if(e.type==='wave'){const index=CAT_NAMES.indexOf(e.cat);if(index>=0&&cats[index]?.group){waving.set(index,performance.now()+1500);burst(cats[index].group.position.x,cats[index].group.position.z,'💛',3)}}
   const info={fish_catch:['🐟 Mèo câu được cá!','🐟',6],flower_bloom:['🌸 Vườn hoa vừa nở!','🌸',8],kitten_visit:['🐾 Mèo con ghé thăm làng!','🐱',7]};
   if(e.type==='micro'){const [msg,symbol,n]=info[e.kind]||['✨ Chuyện nhỏ ở làng!','✨',5];announce(msg);burst(0,0,symbol,n)}
   if(e.type==='major'){const cases={fox:'🦊 Cáo đang lén lấy cá! Gõ !duoi (3 người giúp)',rain:'🌧️ Mưa lớn! Gõ !che để cứu ruộng (3 lượt)',lost_kitten:'🐈 Mèo con đi lạc! Gõ !tim để tìm (3 lượt)',festival:'🎉 Hội làng 5 phút! Mèo nào cũng vui'};announce(cases[e.kind]||'🎪 Sự kiện của làng!');burst(0,0,'✨',13)}
@@ -36,7 +44,8 @@ export function mountRetention({screen,cats,announce,burst,village11}){
   const top=Object.values(state.visitors).sort((a,b)=>b.points-a.points).slice(0,3);
   document.getElementById('ret-top3').textContent=top.length?top.map((u,i)=>(i+1)+'. '+safe(u.name)+' '+u.points).join(' · '):'Hãy bình luận để đứng đầu!';
   document.getElementById('ret-missions').textContent='💬 '+d.chats+'/20 chat · ❤️ '+d.likes+'/100 tim · 🛡️ '+d.help+'/3 cứu làng';
-  const profile=state.visitors[actor().toLowerCase()];document.getElementById('ret-profile').textContent=profile?'🐱 '+safe(profile.name)+' · '+profile.level+' Lv'+(Math.floor(profile.points/100)+1)+' · 🔥 '+profile.streak+' ngày · 📖 '+profile.cats.length+'/20 mèo':'💬 Bình luận để tạo hồ sơ và gặp mèo!';
+  const profile=state.visitors[actor().trim().toLowerCase().slice(0,28)];document.getElementById('ret-profile').textContent=profile?'🐱 '+safe(profile.name)+' · '+profile.level+' Lv'+(Math.floor(profile.points/100)+1)+' · 🔥 '+profile.streak+' ngày · 📖 '+profile.cats.length+'/20 mèo':'💬 Bình luận để tạo hồ sơ và gặp mèo!';
+  updateAlbum(profile);
   document.getElementById('ret-teams').textContent='🟠 Cam '+state.teams.cam+' · 🔵 Xanh '+state.teams.xanh;
   if(state.crisis)document.querySelector('.ret-call').textContent='⚠️ '+({fox:'Cáo trộm cá',rain:'Mưa lớn',lost_kitten:'Mèo con đi lạc'}[state.crisis.kind]||'Sự cố')+' — Gõ '+state.crisis.command+' ('+state.crisis.progress+'/'+state.crisis.required+')';
   else document.querySelector('.ret-call').textContent='💬 Chat để mèo chào · ❤️ Tim giúp làng · !choan / !baove / !cam / !xanh';
