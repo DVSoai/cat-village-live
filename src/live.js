@@ -5,15 +5,15 @@ export function normalizeEvent(message){
  const d=message.data??{}, type=String(message.event??message.type??'').toLowerCase();
  const user=String(d.uniqueId??d.user?.uniqueId??d.nickname??d.user?.nickname??'Khách').slice(0,28);
  const avatar=String(d.profilePictureUrl??d.user?.profilePictureUrl??'').slice(0,512);
- if(type==='chat'||type==='comment')return {type:'chat',user,data:String(d.comment??d.text??'').slice(0,100),avatar};
+ if(type==='chat'||type==='comment')return {...{type:'chat',user,data:String(d.comment??d.text??'').slice(0,100)},...(avatar?{avatar}:{})};
  if(type==='like')return {type:'like',user,data:integer(d.likeCount??d.count)};
- if(type==='follow')return {type:'follow',user,data:null,avatar};
+ if(type==='follow')return {...{type:'follow',user,data:null},...(avatar?{avatar}:{})};
  if(type!=='gift')return null;
  if(Number(d.giftType)===1&&!d.repeatEnd)return null;
  const name=String(d.giftName??d.gift?.name??'').toLowerCase();
  const diamonds=Number(d.diamondCount??d.gift?.diamondCount??0);
  const count=integer(d.repeatCount);
- return {type:name.includes('rose')||name.includes('hồng')?'gift_rose':diamonds>=100?'gift_super':'gift_food',user,data:count,coins:Number.isFinite(diamonds)&&diamonds>0?diamonds:null,avatar};
+ return {...{type:name.includes('rose')||name.includes('hồng')?'gift_rose':diamonds>=100?'gift_super':'gift_food',user,data:count},...(Number.isFinite(diamonds)&&diamonds>0?{coins:diamonds}:{}),...(avatar?{avatar}:{})};
 }
 export function connectLive({url,onEvent,onStatus,Socket=globalThis.WebSocket}){
  let socket,timer,stopped=false,delay=1000;
