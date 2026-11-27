@@ -22,7 +22,7 @@ export class Village12 {
  persist(){try{this.storage?.setItem('catVillageV12',JSON.stringify(this.data))}catch{}}
  leaders(){return Object.values(this.data.contributors).sort((a,b)=>b.score-a.score||a.name.localeCompare(b.name,'vi')).slice(0,3)}
  contribute(user,points){const n=Math.min(2000,Math.floor(finite(points,0)));if(n<1)return;
-  const key=clean(user).toLocaleLowerCase('vi');const record=this.data.contributors[key]??{name:clean(user),score:0};record.score+=n;this.data.contributors[key]=record;this.data.progress+=n;
+  const key=clean(user).toLocaleLowerCase('vi');const record=Object.hasOwn(this.data.contributors,key)?this.data.contributors[key]:{name:clean(user),score:0};record.score+=n;Object.defineProperty(this.data.contributors,key,{value:record,writable:true,enumerable:true,configurable:true});this.data.progress+=n;
   for(const zone of ZONES){if(this.data.progress>=zone.threshold&&!this.data.unlocks.includes(zone.id)){this.data.unlocks.push(zone.id);this.onEffect({type:'unlock',zone,leaders:this.leaders().map(x=>x.name)});}}
   this.persist();
  }
