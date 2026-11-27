@@ -3,6 +3,8 @@ import * as THREE from 'three';
 import './style.css';
 import { connectLive } from './live.js';
 import { mountV11 } from './v11-ui.js';
+import { mountRetention } from './retention-ui.js';
+let retentionRender=()=>{},retentionModel=null;
 let v11Render=()=>{},v11RaceMove=()=>false;
 const app=document.getElementById('app');
 app.innerHTML='<div class="layout"><div class="screen" id="screen"><div class="hud"><div class="top"><div class="logo"><strong>🐾 LÀNG MÈO</strong><small>COZY LIVE VILLAGE</small></div><div class="counter" id="clock"></div></div><div class="bottom"><div class="event" id="event">🌻 Chào mừng đến Làng Mèo Online!</div><div class="tagline">💬 Bình luận • ❤️ Thả tim • 🌹 Tặng hoa để giúp làng</div></div></div></div><aside class="panel"><h2>🐱 Trạm điều khiển</h2><p>Bản demo mô phỏng sự kiện TikTok LIVE. Panel này không nằm trong khung phát sóng.</p><input id="username" placeholder="Tên người xem" value="KhachGheTham"/><button id="chat">💬 Bình luận chào làng</button><button id="like">❤️ Thả 100 tim</button><button class="rose" id="rose">🌹 Tặng hoa hồng</button><button class="gold" id="food">🐟 Tặng giỏ cá</button><button class="special" id="super">🎉 Tặng quà lớn: Lễ hội</button><button id="day">🌙 Chuyển ngày / đêm</button><div class="stats"><div class="stat"><b id="flowers">0</b><small>Hoa cộng đồng</small></div><div class="stat"><b id="hearts">0</b><small>Lượt tim</small></div><div class="stat"><b id="fish">0</b><small>Cá dự trữ</small></div><div class="stat"><b id="visits">0</b><small>Khách ghé thăm</small></div></div><div class="hint"><strong>TikFinity WebSocket</strong><input id="liveUrl" value="ws://localhost:21213/" aria-label="WebSocket URL"/><button id="liveConnect">Kết nối LIVE</button><p id="liveStatus" role="status">Chưa kết nối</p>Tích hợp qua <code>window.handleTikTokEvent(type,username,data)</code>. Tiến độ lưu trong trình duyệt.</div></aside></div>';
@@ -83,12 +85,14 @@ let last=performance.now(),elapsed=0;
 function frame(now){requestAnimationFrame(frame);const dt=Math.min(.05,(now-last)/1000);last=now;elapsed+=dt;state.clock=(state.clock+dt/(30*60))%1;const hour=Math.floor(state.clock*24),minute=Math.floor(state.clock*1440)%60,night=state.night||hour>=19||hour<6;
 sun.intensity=THREE.MathUtils.lerp(sun.intensity,night?.55:3,dt*2);hemi.intensity=THREE.MathUtils.lerp(hemi.intensity,night?.9:2.35,dt*2);scene.background.set(night?'#3b5667':'#c9e7eb');scene.fog.color.set(night?'#3b5667':'#c9e7eb');
 document.getElementById('clock').innerHTML=(night?'🌙':'☀️')+' '+String(hour).padStart(2,'0')+':'+String(minute).padStart(2,'0')+'<br>🐱 20 cư dân';
-for(const c of cats){if(v11RaceMove(c,now))continue;c.waiting-=dt;if(c.waiting<=0){const v=c.target.clone().sub(c.group.position);v.y=0;if(v.length()<.22){c.target.set(c.zone[0]+(Math.random()-.5)*c.zone[2]*2,0,c.zone[1]+(Math.random()-.5)*c.zone[3]*2);c.waiting=.8+Math.random()*3}else{v.normalize();c.group.position.addScaledVector(v,dt*c.speed*(night?.45:1));c.group.rotation.y=Math.atan2(v.x,v.z);c.group.position.y=Math.sin(elapsed*12+c.phase)*.035}}else c.group.position.y=Math.sin(elapsed*2+c.phase)*.015;if(now<festivalUntil)c.group.position.y+=Math.max(0,Math.sin(elapsed*8+c.phase))*.13}
+for(const c of cats){if(v11RaceMove(c,now))continue;c.waiting-=dt;if(c.waiting<=0){const v=c.target.clone().sub(c.group.position);v.y=0;if(v.length()<.22){c.target.set(c.zone[0]+(Math.random()-.5)*c.zone[2]*2,0,c.zone[1]+(Math.random()-.5)*c.zone[3]*2);c.waiting=.8+Math.random()*3}else{v.normalize();c.group.position.addScaledVector(v,dt*c.speed*(night?.45:1)*(retentionModel?.data?.stats?.hunger<25?.5:1));c.group.rotation.y=Math.atan2(v.x,v.z);c.group.position.y=Math.sin(elapsed*12+c.phase)*.035}}else c.group.position.y=Math.sin(elapsed*2+c.phase)*.015;if(now<festivalUntil)c.group.position.y+=Math.max(0,Math.sin(elapsed*8+c.phase))*.13}
 for(let i=particles.length-1;i>=0;i--){const p=particles[i];p.life-=dt;p.y+=dt*.8;p.x+=p.drift*dt;vector.set(p.x,p.y,p.z).project(camera);p.div.style.left=((vector.x+1)/2*screen.clientWidth)+'px';p.div.style.top=((-vector.y+1)/2*screen.clientHeight)+'px';p.div.style.opacity=Math.min(1,p.life);if(p.life<=0){p.div.remove();particles.splice(i,1)}}
-v11Render(now,dt);renderer.render(scene,camera)}requestAnimationFrame(frame);setInterval(persist,12000);
+v11Render(now,dt);retentionRender(now,dt);renderer.render(scene,camera)}requestAnimationFrame(frame);setInterval(persist,12000);
 const village11=mountV11({scene,world,camera,screen,cats,announce,burst,username:who,baselineState:state});
 v11Render=village11.render;v11RaceMove=village11.raceMove;
 const originalHandler=window.handleTikTokEvent;
-window.handleTikTokEvent=(type,name='Khách',data='')=>{originalHandler(type,name,data);village11.handle(type,name,data)};
+const retention=mountRetention({screen,cats,announce,burst,village11});
+retentionRender=retention.render;retentionModel=retention.model;
+window.handleTikTokEvent=(type,name='Khách',data='')=>{originalHandler(type,name,data);village11.handle(type,name,data);retention.action(type,name,data)};
 window.__catVillage11=village11.village;
 
